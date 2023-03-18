@@ -20,6 +20,7 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
     @Query("SELECT t.merchant, SUM(t.grossAmount) FROM PaymentTransaction t WHERE YEAR(t.transactionDate) = :year GROUP BY t.merchant ORDER BY SUM(t.grossAmount) DESC")
     List<Object[]> findMerchantWithHighestTurnover(@Param("year") Integer year);
 
-    PaymentTransaction findCustomerAndMerchantById(Long id, Long id1);
+     @Query("SELECT pt FROM PaymentTransaction pt WHERE pt.customer.id = :customerId AND pt.merchant.id = :merchantId")
+    PaymentTransaction findCustomerAndMerchantById(@Param("customerId") Long customerId, @Param("merchantId") Long merchantId);
 }
 
