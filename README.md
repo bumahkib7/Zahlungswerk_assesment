@@ -16,10 +16,10 @@ It covers the use case of “customer doing payment transactions at merchant”.
 ### Merchant:
 - name
 - active
-    
+
  ## Technical scope
 
- You can work with any SQL relational database according to your best experience (e.g. PostgreSQL, mySQL, ...). 
+ You can work with any SQL relational database according to your best experience (e.g. PostgreSQL, mySQL, ...).
  REST services can be implemented by using Spring Boot as main framework.
 Programming language of the service component has to be Java.
 
@@ -31,7 +31,7 @@ customer can do 0 - N transactions at any of the merchants
 The transaction is always done by one customer at one marchant Multiple customers are doing transactions at one merchant
 
 
-write SQL commands to create a data model:
+##### Write SQL commands to create a data model:
 
 #### Assume that there are some payment transactions done in 2022:
 - Write an SQL query to select the merchant with the highest turnover in 2022
