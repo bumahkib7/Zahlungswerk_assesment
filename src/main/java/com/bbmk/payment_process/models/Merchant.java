@@ -1,4 +1,4 @@
-package com.bbmk.payment_process.service;
+package com.bbmk.payment_process.models;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -32,11 +32,16 @@ public class Merchant {
     @ToString.Exclude
     private List<PaymentTransaction> transactions = new ArrayList<>();
 
+    public Merchant(String name, boolean active) {
+        this.name = name;
+        this.active = active;
+
+    }
+
     public Merchant(long id, String name, boolean active) {
         this.id = id;
         this.name = name;
         this.active = active;
-
     }
 
     @Override
@@ -47,10 +52,7 @@ public class Merchant {
         if (isActive() != merchant.isActive()) return false;
         if (getId() != null ? !getId().equals(merchant.getId()) : merchant.getId() != null) return false;
         if (getName() != null ? !getName().equals(merchant.getName()) : merchant.getName() != null) return false;
-        if (getTransactions() != null ? !getTransactions().equals(merchant.getTransactions()) : merchant.getTransactions() != null)
-            return false;
-
-        return true;
+        return getTransactions() != null ? getTransactions().equals(merchant.getTransactions()) : merchant.getTransactions() == null;
     }
 
     @Override

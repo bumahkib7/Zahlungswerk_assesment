@@ -1,9 +1,6 @@
-package com.example.zahlungswerk.models;
-
-import com.example.zahlungswerk.serializers.LocalDateTypeAdapter;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.google.gson.annotations.JsonAdapter;
+package com.bbmk.payment_process.models;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.*;
 import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
@@ -21,63 +18,36 @@ import java.util.Objects;
 @NoArgsConstructor
 public class Customer {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "customer_id")
     private Long id;
     @NotNull
+
     private String name;
     @NotNull
+    @Email
     private String email;
     @Temporal(TemporalType.DATE)
-    @JsonAdapter(LocalDateTypeAdapter.class)
     private LocalDate dateOfRegistration;
 
-    @JsonManagedReference
+    @Column(name="is_active")
+    private boolean isActive;
+
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    @ToString.Exclude
     private List<PaymentTransaction> transactions = new ArrayList<>();
 
 
-    public Long getId() {
-        return id;
-    }
 
-    public void setId(Long id) {
+    public Customer(long id, @NotNull String name, @NotNull String email, LocalDate dateOfRegistration, boolean active) {
         this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
         this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
         this.email = email;
+        this.isActive = active;
+
     }
 
-    public LocalDate getDateOfRegistration() {
-        return dateOfRegistration;
-    }
-
-    public void setDateOfRegistration(LocalDate dateOfRegistration) {
-        this.dateOfRegistration = dateOfRegistration;
-    }
-
-    public List<PaymentTransaction> getTransactions() {
-        return transactions;
-    }
-
-    public void setTransactions(List<PaymentTransaction> transactions) {
-        this.transactions = transactions;
-    }
 
     @Override
     public boolean equals(Object o) {

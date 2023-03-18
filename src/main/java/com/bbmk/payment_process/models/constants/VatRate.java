@@ -1,4 +1,4 @@
-package com.example.zahlungswerk.models.constants;
+package com.bbmk.payment_process.models.constants;
 
 public enum VatRate {
     ZERO_PERCENT(0.00), SEVEN_PERCENT(0.07), NINETEEN_PERCENT(0.19);
