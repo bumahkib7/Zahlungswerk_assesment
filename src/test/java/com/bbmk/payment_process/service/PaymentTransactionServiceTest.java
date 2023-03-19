@@ -1,17 +1,5 @@
 package com.bbmk.payment_process.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.bbmk.payment_process.exceptions.EmptyTransactionListException;
 import com.bbmk.payment_process.models.Customer;
 import com.bbmk.payment_process.models.Merchant;
@@ -20,32 +8,25 @@ import com.bbmk.payment_process.models.constants.VatRate;
 import com.bbmk.payment_process.repositories.PaymentTransactionRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.persistence.TypedQuery;
-import org.hibernate.NonUniqueResultException;
-import org.hibernate.engine.spi.SessionDelegatorBaseImpl;
-import org.hibernate.engine.spi.SessionFactoryDelegatingImpl;
-import org.hibernate.procedure.internal.ProcedureCallImpl;
-
-import org.junit.jupiter.api.Disabled;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 @ContextConfiguration(classes = {PaymentTransactionService.class})
-@ExtendWith(SpringExtension.class)
-class PaymentTransactionServiceTest {
+@RunWith(SpringJUnit4ClassRunner.class)
+public class PaymentTransactionServiceTest {
     @MockBean
     private EntityManager entityManager;
 
@@ -62,8 +43,7 @@ class PaymentTransactionServiceTest {
      * Method under test: {@link PaymentTransactionService#createTransaction(PaymentTransaction)}
      */
     @Test
-    void testCreateTransaction() throws IllegalArgumentException {
-        // Arrange
+    public void testCreateTransaction() throws IllegalArgumentException {
         PaymentTransaction paymentTransaction = new PaymentTransaction();
         paymentTransaction.setCustomer(new Customer());
         paymentTransaction.setGrossAmount(BigDecimal.valueOf(42L));
@@ -81,9 +61,9 @@ class PaymentTransactionServiceTest {
         paymentTransaction1.setReceiptId("42");
         paymentTransaction1.setTransactionDate(null);
         paymentTransaction1.setVatRate(VatRate.ZERO_PERCENT);
-        when(paymentTransactionRepository.findCustomerAndMerchantById((Long) any(), (Long) any()))
+        when(paymentTransactionRepository.findCustomerAndMerchantById(any(), any()))
             .thenReturn(paymentTransaction);
-        when(paymentTransactionRepository.save((PaymentTransaction) any())).thenReturn(paymentTransaction1);
+        when(paymentTransactionRepository.save(any())).thenReturn(paymentTransaction1);
 
         PaymentTransaction paymentTransaction2 = new PaymentTransaction();
         paymentTransaction2.setCustomer(new Customer());
@@ -93,11 +73,9 @@ class PaymentTransactionServiceTest {
         paymentTransaction2.setReceiptId("42");
         paymentTransaction2.setTransactionDate(null);
         paymentTransaction2.setVatRate(VatRate.ZERO_PERCENT);
-
-        // Act and Assert
         assertThrows(IllegalArgumentException.class,
             () -> paymentTransactionService.createTransaction(paymentTransaction2));
-        verify(paymentTransactionRepository).findCustomerAndMerchantById((Long) any(), (Long) any());
+        verify(paymentTransactionRepository).findCustomerAndMerchantById(any(), any());
     }
 
 
@@ -105,8 +83,7 @@ class PaymentTransactionServiceTest {
      * Method under test: {@link PaymentTransactionService#createTransaction(PaymentTransaction)}
      */
     @Test
-    void testCreateTransaction3() throws IllegalArgumentException {
-        // Arrange
+    public void testCreateTransaction3() throws IllegalArgumentException {
         PaymentTransaction paymentTransaction = new PaymentTransaction();
         paymentTransaction.setCustomer(new Customer());
         paymentTransaction.setGrossAmount(BigDecimal.valueOf(42L));
@@ -124,19 +101,19 @@ class PaymentTransactionServiceTest {
         paymentTransaction1.setReceiptId("42");
         paymentTransaction1.setTransactionDate(null);
         paymentTransaction1.setVatRate(VatRate.ZERO_PERCENT);
-        when(paymentTransactionRepository.findCustomerAndMerchantById((Long) any(), (Long) any()))
+        when(paymentTransactionRepository.findCustomerAndMerchantById(any(), any()))
             .thenReturn(paymentTransaction);
-        when(paymentTransactionRepository.save((PaymentTransaction) any())).thenReturn(paymentTransaction1);
+        when(paymentTransactionRepository.save(any())).thenReturn(paymentTransaction1);
         PaymentTransaction paymentTransaction2 = mock(PaymentTransaction.class);
         when(paymentTransaction2.getMerchant()).thenReturn(null);
         when(paymentTransaction2.getCustomer()).thenReturn(new Customer());
-        doNothing().when(paymentTransaction2).setCustomer((Customer) any());
-        doNothing().when(paymentTransaction2).setGrossAmount((BigDecimal) any());
-        doNothing().when(paymentTransaction2).setId((Long) any());
-        doNothing().when(paymentTransaction2).setMerchant((Merchant) any());
-        doNothing().when(paymentTransaction2).setReceiptId((String) any());
-        doNothing().when(paymentTransaction2).setTransactionDate((ZonedDateTime) any());
-        doNothing().when(paymentTransaction2).setVatRate((VatRate) any());
+        doNothing().when(paymentTransaction2).setCustomer(any());
+        doNothing().when(paymentTransaction2).setGrossAmount(any());
+        doNothing().when(paymentTransaction2).setId(any());
+        doNothing().when(paymentTransaction2).setMerchant(any());
+        doNothing().when(paymentTransaction2).setReceiptId(any());
+        doNothing().when(paymentTransaction2).setTransactionDate(any());
+        doNothing().when(paymentTransaction2).setVatRate(any());
         paymentTransaction2.setCustomer(new Customer());
         paymentTransaction2.setGrossAmount(BigDecimal.valueOf(42L));
         paymentTransaction2.setId(1L);
@@ -144,30 +121,79 @@ class PaymentTransactionServiceTest {
         paymentTransaction2.setReceiptId("42");
         paymentTransaction2.setTransactionDate(null);
         paymentTransaction2.setVatRate(VatRate.ZERO_PERCENT);
-
-        // Act and Assert
         assertThrows(IllegalArgumentException.class,
             () -> paymentTransactionService.createTransaction(paymentTransaction2));
         verify(paymentTransaction2).getCustomer();
         verify(paymentTransaction2).getMerchant();
-        verify(paymentTransaction2).setCustomer((Customer) any());
-        verify(paymentTransaction2).setGrossAmount((BigDecimal) any());
-        verify(paymentTransaction2).setId((Long) any());
-        verify(paymentTransaction2).setMerchant((Merchant) any());
-        verify(paymentTransaction2).setReceiptId((String) any());
-        verify(paymentTransaction2).setTransactionDate((ZonedDateTime) any());
-        verify(paymentTransaction2).setVatRate((VatRate) any());
+        verify(paymentTransaction2).setCustomer(any());
+        verify(paymentTransaction2).setGrossAmount(any());
+        verify(paymentTransaction2).setId(any());
+        verify(paymentTransaction2).setMerchant(any());
+        verify(paymentTransaction2).setReceiptId(any());
+        verify(paymentTransaction2).setTransactionDate(any());
+        verify(paymentTransaction2).setVatRate(any());
+    }
+
+    /**
+     * Method under test: {@link PaymentTransactionService#createTransaction(PaymentTransaction)}
+     */
+    @Test
+    public void testCreateTransaction4() throws IllegalArgumentException {
+        PaymentTransaction paymentTransaction = new PaymentTransaction();
+        paymentTransaction.setCustomer(new Customer());
+        paymentTransaction.setGrossAmount(BigDecimal.valueOf(42L));
+        paymentTransaction.setId(1L);
+        paymentTransaction.setMerchant(new Merchant("Name", true));
+        paymentTransaction.setReceiptId("42");
+        paymentTransaction.setTransactionDate(null);
+        paymentTransaction.setVatRate(VatRate.ZERO_PERCENT);
+
+        PaymentTransaction paymentTransaction1 = new PaymentTransaction();
+        paymentTransaction1.setCustomer(new Customer());
+        paymentTransaction1.setGrossAmount(BigDecimal.valueOf(42L));
+        paymentTransaction1.setId(1L);
+        paymentTransaction1.setMerchant(new Merchant("Name", true));
+        paymentTransaction1.setReceiptId("42");
+        paymentTransaction1.setTransactionDate(null);
+        paymentTransaction1.setVatRate(VatRate.ZERO_PERCENT);
+        when(paymentTransactionRepository.findCustomerAndMerchantById(any(), any()))
+            .thenReturn(paymentTransaction);
+        when(paymentTransactionRepository.save(any())).thenReturn(paymentTransaction1);
+        PaymentTransaction paymentTransaction2 = mock(PaymentTransaction.class);
+        when(paymentTransaction2.getMerchant()).thenReturn(new Merchant("Name", true));
+        when(paymentTransaction2.getCustomer()).thenReturn(null);
+        doNothing().when(paymentTransaction2).setCustomer(any());
+        doNothing().when(paymentTransaction2).setGrossAmount(any());
+        doNothing().when(paymentTransaction2).setId(any());
+        doNothing().when(paymentTransaction2).setMerchant(any());
+        doNothing().when(paymentTransaction2).setReceiptId(any());
+        doNothing().when(paymentTransaction2).setTransactionDate(any());
+        doNothing().when(paymentTransaction2).setVatRate(any());
+        paymentTransaction2.setCustomer(new Customer());
+        paymentTransaction2.setGrossAmount(BigDecimal.valueOf(42L));
+        paymentTransaction2.setId(1L);
+        paymentTransaction2.setMerchant(new Merchant("Name", true));
+        paymentTransaction2.setReceiptId("42");
+        paymentTransaction2.setTransactionDate(null);
+        paymentTransaction2.setVatRate(VatRate.ZERO_PERCENT);
+        assertThrows(IllegalArgumentException.class,
+            () -> paymentTransactionService.createTransaction(paymentTransaction2));
+        verify(paymentTransaction2).getCustomer();
+        verify(paymentTransaction2).setCustomer(any());
+        verify(paymentTransaction2).setGrossAmount(any());
+        verify(paymentTransaction2).setId(any());
+        verify(paymentTransaction2).setMerchant(any());
+        verify(paymentTransaction2).setReceiptId(any());
+        verify(paymentTransaction2).setTransactionDate(any());
+        verify(paymentTransaction2).setVatRate(any());
     }
 
     /**
      * Method under test: {@link PaymentTransactionService#getAllTransactions()}
      */
     @Test
-    void testGetAllTransactions() {
-        // Arrange
+    public void testGetAllTransactions() throws EmptyTransactionListException {
         when(paymentTransactionRepository.findAll()).thenReturn(new ArrayList<>());
-
-        // Act and Assert
         assertThrows(EmptyTransactionListException.class, () -> paymentTransactionService.getAllTransactions());
         verify(paymentTransactionRepository).findAll();
     }
@@ -176,8 +202,7 @@ class PaymentTransactionServiceTest {
      * Method under test: {@link PaymentTransactionService#getAllTransactions()}
      */
     @Test
-    void testGetAllTransactions2() throws EmptyTransactionListException {
-        // Arrange
+    public void testGetAllTransactions2() throws EmptyTransactionListException {
         PaymentTransaction paymentTransaction = new PaymentTransaction();
         paymentTransaction.setCustomer(new Customer());
         paymentTransaction.setGrossAmount(BigDecimal.valueOf(42L));
@@ -190,11 +215,7 @@ class PaymentTransactionServiceTest {
         ArrayList<PaymentTransaction> paymentTransactionList = new ArrayList<>();
         paymentTransactionList.add(paymentTransaction);
         when(paymentTransactionRepository.findAll()).thenReturn(paymentTransactionList);
-
-        // Act
         List<PaymentTransaction> actualAllTransactions = paymentTransactionService.getAllTransactions();
-
-        // Assert
         assertSame(paymentTransactionList, actualAllTransactions);
         assertEquals(1, actualAllTransactions.size());
         verify(paymentTransactionRepository).findAll();
@@ -204,11 +225,8 @@ class PaymentTransactionServiceTest {
      * Method under test: {@link PaymentTransactionService#getAllTransactions()}
      */
     @Test
-    void testGetAllTransactions3() throws EmptyTransactionListException {
-        // Arrange
+    public void testGetAllTransactions3() throws EmptyTransactionListException {
         when(paymentTransactionRepository.findAll()).thenThrow(new IllegalArgumentException());
-
-        // Act and Assert
         assertThrows(IllegalArgumentException.class, () -> paymentTransactionService.getAllTransactions());
         verify(paymentTransactionRepository).findAll();
     }
@@ -217,74 +235,48 @@ class PaymentTransactionServiceTest {
      * Method under test: {@link PaymentTransactionService#getTransactionsByMerchant(Long)}
      */
     @Test
-    void testGetTransactionsByMerchant() throws IllegalArgumentException {
-        // Arrange
+    public void testGetTransactionsByMerchant() throws IllegalArgumentException {
         ArrayList<PaymentTransaction> paymentTransactionList = new ArrayList<>();
-        when(paymentTransactionRepository.findByMerchantId((Long) any())).thenReturn(paymentTransactionList);
-        long merchantId = 1L;
-
-        // Act
-        List<PaymentTransaction> actualTransactionsByMerchant = paymentTransactionService
-            .getTransactionsByMerchant(merchantId);
-
-        // Assert
+        when(paymentTransactionRepository.findByMerchantId(any())).thenReturn(paymentTransactionList);
+        List<PaymentTransaction> actualTransactionsByMerchant = paymentTransactionService.getTransactionsByMerchant(1L);
         assertSame(paymentTransactionList, actualTransactionsByMerchant);
         assertTrue(actualTransactionsByMerchant.isEmpty());
-        verify(paymentTransactionRepository).findByMerchantId((Long) any());
+        verify(paymentTransactionRepository).findByMerchantId(any());
     }
-
 
 
     /**
      * Method under test: {@link PaymentTransactionService#getTransactionsByMerchant(Long)}
      */
     @Test
-    void testGetTransactionsByMerchant3() throws IllegalArgumentException {
-        // Arrange
-        when(paymentTransactionRepository.findByMerchantId((Long) any())).thenThrow(new IllegalArgumentException());
-        long merchantId = 1L;
-
-        // Act and Assert
-        assertThrows(IllegalArgumentException.class,
-            () -> paymentTransactionService.getTransactionsByMerchant(merchantId));
-        verify(paymentTransactionRepository).findByMerchantId((Long) any());
+    public void testGetTransactionsByMerchant3() throws IllegalArgumentException {
+        when(paymentTransactionRepository.findByMerchantId(any())).thenThrow(new IllegalArgumentException());
+        assertThrows(IllegalArgumentException.class, () -> paymentTransactionService.getTransactionsByMerchant(1L));
+        verify(paymentTransactionRepository).findByMerchantId(any());
     }
 
     /**
      * Method under test: {@link PaymentTransactionService#getTransactionsByCustomer(Long)}
      */
     @Test
-    void testGetTransactionsByCustomer() throws IllegalArgumentException {
-        // Arrange
+    public void testGetTransactionsByCustomer() throws IllegalArgumentException {
         ArrayList<PaymentTransaction> paymentTransactionList = new ArrayList<>();
-        when(paymentTransactionRepository.findByCustomerId((Long) any())).thenReturn(paymentTransactionList);
-        long customerId = 1L;
-
-        // Act
-        List<PaymentTransaction> actualTransactionsByCustomer = paymentTransactionService
-            .getTransactionsByCustomer(customerId);
-
-        // Assert
+        when(paymentTransactionRepository.findByCustomerId(any())).thenReturn(paymentTransactionList);
+        List<PaymentTransaction> actualTransactionsByCustomer = paymentTransactionService.getTransactionsByCustomer(1L);
         assertSame(paymentTransactionList, actualTransactionsByCustomer);
         assertTrue(actualTransactionsByCustomer.isEmpty());
-        verify(paymentTransactionRepository).findByCustomerId((Long) any());
+        verify(paymentTransactionRepository).findByCustomerId(any());
     }
-
 
 
     /**
      * Method under test: {@link PaymentTransactionService#getTransactionsByCustomer(Long)}
      */
     @Test
-    void testGetTransactionsByCustomer3() throws IllegalArgumentException {
-        // Arrange
-        when(paymentTransactionRepository.findByCustomerId((Long) any())).thenThrow(new IllegalArgumentException());
-        long customerId = 1L;
-
-        // Act and Assert
-        assertThrows(IllegalArgumentException.class,
-            () -> paymentTransactionService.getTransactionsByCustomer(customerId));
-        verify(paymentTransactionRepository).findByCustomerId((Long) any());
+    public void testGetTransactionsByCustomer3() throws IllegalArgumentException {
+        when(paymentTransactionRepository.findByCustomerId(any())).thenThrow(new IllegalArgumentException());
+        assertThrows(IllegalArgumentException.class, () -> paymentTransactionService.getTransactionsByCustomer(1L));
+        verify(paymentTransactionRepository).findByCustomerId(any());
     }
 
 
@@ -292,38 +284,27 @@ class PaymentTransactionServiceTest {
      * Method under test: {@link PaymentTransactionService#deleteTransaction(long)}
      */
     @Test
-    void testDeleteTransaction() {
-        // Arrange
-        doNothing().when(paymentTransactionRepository).deleteById((Long) any());
-        long id = 1L;
-
-        // Act
-        paymentTransactionService.deleteTransaction(id);
-
-        // Assert that nothing has changed
-        verify(paymentTransactionRepository).deleteById((Long) any());
+    public void testDeleteTransaction() {
+        doNothing().when(paymentTransactionRepository).deleteById(any());
+        paymentTransactionService.deleteTransaction(1L);
+        verify(paymentTransactionRepository).deleteById(any());
     }
 
     /**
      * Method under test: {@link PaymentTransactionService#deleteTransaction(long)}
      */
     @Test
-    void testDeleteTransaction2() {
-        // Arrange
-        doThrow(new IllegalArgumentException()).when(paymentTransactionRepository).deleteById((Long) any());
-        long id = 1L;
-
-        // Act and Assert
-        assertThrows(IllegalArgumentException.class, () -> paymentTransactionService.deleteTransaction(id));
-        verify(paymentTransactionRepository).deleteById((Long) any());
+    public void testDeleteTransaction2() {
+        doThrow(new IllegalArgumentException()).when(paymentTransactionRepository).deleteById(any());
+        assertThrows(IllegalArgumentException.class, () -> paymentTransactionService.deleteTransaction(1L));
+        verify(paymentTransactionRepository).deleteById(any());
     }
 
     /**
      * Method under test: {@link PaymentTransactionService#getTransactionById(long)}
      */
     @Test
-    void testGetTransactionById() {
-        // Arrange
+    public void testGetTransactionById() {
         PaymentTransaction paymentTransaction = new PaymentTransaction();
         paymentTransaction.setCustomer(new Customer());
         paymentTransaction.setGrossAmount(BigDecimal.valueOf(42L));
@@ -333,33 +314,22 @@ class PaymentTransactionServiceTest {
         paymentTransaction.setTransactionDate(null);
         paymentTransaction.setVatRate(VatRate.ZERO_PERCENT);
         Optional<PaymentTransaction> ofResult = Optional.of(paymentTransaction);
-        when(paymentTransactionRepository.findById((Long) any())).thenReturn(ofResult);
-        long l = 1L;
-
-        // Act
-        Optional<PaymentTransaction> actualTransactionById = paymentTransactionService.getTransactionById(l);
-
-        // Assert
+        when(paymentTransactionRepository.findById(any())).thenReturn(ofResult);
+        Optional<PaymentTransaction> actualTransactionById = paymentTransactionService.getTransactionById(1L);
         assertSame(ofResult, actualTransactionById);
         assertTrue(actualTransactionById.isPresent());
         assertEquals("42", actualTransactionById.get().getGrossAmount().toString());
-        verify(paymentTransactionRepository).findById((Long) any());
+        verify(paymentTransactionRepository).findById(any());
     }
 
     /**
      * Method under test: {@link PaymentTransactionService#getTransactionById(long)}
      */
     @Test
-    void testGetTransactionById2() {
-        // Arrange
-        when(paymentTransactionRepository.findById((Long) any())).thenThrow(new IllegalArgumentException());
-        long l = 1L;
-
-        // Act and Assert
-        assertThrows(IllegalArgumentException.class, () -> paymentTransactionService.getTransactionById(l));
-        verify(paymentTransactionRepository).findById((Long) any());
+    public void testGetTransactionById2() {
+        when(paymentTransactionRepository.findById(any())).thenThrow(new IllegalArgumentException());
+        assertThrows(IllegalArgumentException.class, () -> paymentTransactionService.getTransactionById(1L));
+        verify(paymentTransactionRepository).findById(any());
     }
-
-
 }
 

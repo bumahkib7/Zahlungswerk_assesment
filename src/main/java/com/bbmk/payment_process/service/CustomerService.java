@@ -1,10 +1,9 @@
 package com.bbmk.payment_process.service;
 
+import com.bbmk.payment_process.Dto.TopInactiveCustomerDTO;
 import com.bbmk.payment_process.models.Customer;
 import com.bbmk.payment_process.repositories.CustomerRepository;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,97 +12,81 @@ import org.springframework.stereotype.Service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Year;
 import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class CustomerService {
     private final CustomerRepository customerRepository;
-    @PersistenceContext
-    private final EntityManager entityManager;
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public CustomerService(CustomerRepository customerRepository, EntityManager entityManager, JdbcTemplate jdbcTemplate) {
+    public CustomerService(CustomerRepository customerRepository, JdbcTemplate jdbcTemplate) {
         this.customerRepository = customerRepository;
-        this.entityManager = entityManager;
         this.jdbcTemplate = jdbcTemplate;
     }
 
     public List<Customer> getAllCustomers() {
-        try {
-            return customerRepository.findAll();
-        } catch (Exception e) {
-            log.error("Error while fetching all customers: " + e.getMessage());
-            return null;
-        }
+        return customerRepository.findAll();
     }
 
     public Customer getCustomerById(Long id) {
-        try {
-            return customerRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Customer not found"));
-        } catch (EntityNotFoundException e) {
-            log.error("Customer not found");
-            return null;
-        } catch (Exception e) {
-            log.error("Error while fetching customer by id: " + e.getMessage());
-            return null;
-        }
+        return customerRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
     }
 
     public List<Customer> getCustomersWithoutTransactions() {
-        try {
-            return customerRepository.findCustomerByTransactionsLessThan0();
-        } catch (Exception e) {
-            log.error("Error while fetching customers without transactions: " + e.getMessage());
-            return null;
-        }
+        return customerRepository.findCustomerByTransactionsLessThan0();
     }
 
     public List<Customer> findCustomerByTransactions() {
-        try {
-            return customerRepository.findAllCustomersByTransactions();
-        } catch (Exception e) {
-            log.error("Error while fetching customers by transactions: " + e.getMessage());
-            return null;
-        }
+        return customerRepository.findAllCustomersByTransactions();
     }
 
-    public List<Object[]> getTopInactiveCustomers() {
+    public List<TopInactiveCustomerDTO> getTopInactiveCustomers() {
         String sql = """
-            SELECT customer_id, COUNT(*) as num_transactions\s
+            SELECT customer_id, COUNT(*) as num_transactions
             FROM payment_transaction
-            WHERE EXTRACT(YEAR FROM transaction_date) = 2022\s
-            AND customer_id NOT IN (SELECT customer_id FROM payment_transaction WHERE EXTRACT(YEAR FROM transaction_date) = 2023)\s
-            GROUP BY customer_id\s
-            ORDER BY num_transactions DESC\s
+            WHERE EXTRACT(YEAR FROM transaction_date) = 2022
+            AND customer_id NOT IN (SELECT customer_id FROM payment_transaction WHERE EXTRACT(YEAR FROM transaction_date) = 2023)
+            GROUP BY customer_id
+            ORDER BY num_transactions DESC
             LIMIT 5;
             """;
-        try {
-            return jdbcTemplate.query(
-                sql,
-                new CustomerRawMapper()
-            );
-        } catch (Exception e) {
-            log.error("Error while fetching top inactive customers: " + e.getMessage());
-            return null;
-        }
+        return jdbcTemplate.query(sql, new CustomerRawMapper()).stream()
+            .map(row -> {
+                Customer customer = (Customer) row[0];
+                Long numTransactions = (Long) row[1];
+                return new TopInactiveCustomerDTO(customer.getId(), numTransactions);
+            })
+            .collect(Collectors.toList());
+    }
+
+    public List<Customer> getInactiveCustomers() {
+        Year currentYear = Year.now();
+        Year previousYear = currentYear.minusYears(1);
+
+        return customerRepository.findAll().stream()
+            .filter(customer -> customerRepository.findCustomerTransactionsByYear(customer.getId(), previousYear) > 0)
+            .filter(customer -> customerRepository.findCustomerTransactionsByYear(customer.getId(), currentYear) == 0)
+            .collect(Collectors.toList());
     }
 
     public static class CustomerRawMapper implements RowMapper<Object[]> {
         @Override
         public Object[] mapRow(ResultSet rs, int rowNum) throws SQLException {
-            Object[] row = new Object[2];
-            row[0] = new Customer(
+            Customer customer = new Customer(
                 rs.getInt("customer_id"),
                 Base64.getEncoder().encodeToString(rs.getString("name").getBytes()),
                 Base64.getEncoder().encodeToString(rs.getString("email").getBytes()),
                 rs.getDate("date_of_registration").toLocalDate(),
                 rs.getBoolean("is_active")
             );
-            row[1] = rs.getLong("transaction_count");
-            return row;
+            long numTransactions = rs.getLong("num_transactions");
+            return new Object[]{customer, numTransactions};
         }
     }
 }
