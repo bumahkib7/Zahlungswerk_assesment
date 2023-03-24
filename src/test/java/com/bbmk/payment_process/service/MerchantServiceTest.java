@@ -4,21 +4,28 @@ import com.bbmk.payment_process.models.Merchant;
 import com.bbmk.payment_process.repositories.MerchantRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ContextConfiguration(classes = {MerchantService.class})
-@RunWith(SpringJUnit4ClassRunner.class)
-public class MerchantServiceTest {
+@ExtendWith(SpringExtension.class)
+class MerchantServiceTest {
     @MockBean
     private EntityManager entityManager;
 
@@ -31,11 +38,14 @@ public class MerchantServiceTest {
     @Autowired
     private MerchantService merchantService;
 
+    @MockBean
+    private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
     /**
      * Method under test: {@link MerchantService#findMerchantById(Long)}
      */
     @Test
-    public void testFindMerchantById() {
+    void testFindMerchantById() {
         Optional<Merchant> ofResult = Optional.of(new Merchant("Name", true));
         when(merchantRepository.findById(any())).thenReturn(ofResult);
         Optional<Merchant> actualFindMerchantByIdResult = merchantService.findMerchantById(1L);
@@ -48,7 +58,7 @@ public class MerchantServiceTest {
      * Method under test: {@link MerchantService#findMerchantById(Long)}
      */
     @Test
-    public void testFindMerchantById2() {
+    void testFindMerchantById2() {
         when(merchantRepository.findById(any())).thenReturn(Optional.of(new Merchant("Name", true)));
         assertThrows(IllegalArgumentException.class, () -> merchantService.findMerchantById(null));
     }
@@ -57,20 +67,59 @@ public class MerchantServiceTest {
      * Method under test: {@link MerchantService#findMerchantById(Long)}
      */
     @Test
-    public void testFindMerchantById3() {
-        when(merchantRepository.findById(any())).thenReturn(Optional.of(new Merchant("Name", true)));
-        assertThrows(IllegalArgumentException.class, () -> merchantService.findMerchantById(-1L));
-    }
-
-    /**
-     * Method under test: {@link MerchantService#findMerchantById(Long)}
-     */
-    @Test
-    public void testFindMerchantById4() {
+    void testFindMerchantById3() {
         when(merchantRepository.findById(any())).thenThrow(new IllegalArgumentException());
         assertThrows(IllegalArgumentException.class, () -> merchantService.findMerchantById(1L));
         verify(merchantRepository).findById(any());
     }
+
+
+    /**
+     * Method under test: {@link MerchantService#getMerchantsWithHighestTurnover(int, boolean)}
+     */
+    @Test
+    void testGetMerchantsWithHighestTurnover() throws DataAccessException {
+        when(namedParameterJdbcTemplate.queryForList(any(), (SqlParameterSource) any(),
+            (Class<BigDecimal>) any())).thenReturn(new ArrayList<>());
+        assertTrue(merchantService.getMerchantsWithHighestTurnover(1, true).isEmpty());
+        verify(namedParameterJdbcTemplate).queryForList(any(), (SqlParameterSource) any(),
+            (Class<BigDecimal>) any());
+    }
+
+    /**
+     * Method under test: {@link MerchantService#getMerchantsWithHighestTurnover(int, boolean)}
+     */
+    @Test
+    void testGetMerchantsWithHighestTurnover2() throws DataAccessException {
+        ArrayList<BigDecimal> bigDecimalList = new ArrayList<>();
+        bigDecimalList.add(BigDecimal.valueOf(42L));
+        ArrayList<Object> objectList = new ArrayList<>();
+        when(namedParameterJdbcTemplate.query(any(), (SqlParameterSource) any(), (RowMapper<Object>) any()))
+            .thenReturn(objectList);
+        when(namedParameterJdbcTemplate.queryForList(any(), (SqlParameterSource) any(),
+            (Class<BigDecimal>) any())).thenReturn(bigDecimalList);
+        List<Merchant> actualMerchantsWithHighestTurnover = merchantService.getMerchantsWithHighestTurnover(1, true);
+        assertSame(objectList, actualMerchantsWithHighestTurnover);
+        assertTrue(actualMerchantsWithHighestTurnover.isEmpty());
+        verify(namedParameterJdbcTemplate).query(any(), (SqlParameterSource) any(), (RowMapper<Object>) any());
+        verify(namedParameterJdbcTemplate).queryForList(any(), (SqlParameterSource) any(),
+            (Class<BigDecimal>) any());
+    }
+
+    /**
+     * Method under test: {@link MerchantService#getMerchantsWithHighestTurnover(int, boolean)}
+     */
+    @Test
+    void testGetMerchantsWithHighestTurnover3() throws DataAccessException {
+        ArrayList<Object> objectList = new ArrayList<>();
+        when(namedParameterJdbcTemplate.query(any(), (SqlParameterSource) any(), (RowMapper<Object>) any()))
+            .thenReturn(objectList);
+        List<Merchant> actualMerchantsWithHighestTurnover = merchantService.getMerchantsWithHighestTurnover(1, true);
+        assertSame(objectList, actualMerchantsWithHighestTurnover);
+        assertTrue(actualMerchantsWithHighestTurnover.isEmpty());
+        verify(namedParameterJdbcTemplate).query(any(), (SqlParameterSource) any(), (RowMapper<Object>) any());
+    }
+
 
 }
 

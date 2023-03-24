@@ -1,10 +1,12 @@
 package com.bbmk.payment_process.models;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;
 import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,11 +21,13 @@ import java.util.Objects;
 public class Customer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "customer_id")
     private Long id;
-    @NotNull
 
+    @Version
+    private Long version;
+    @NotNull
     private String name;
     @NotNull
     @Email
@@ -31,19 +35,22 @@ public class Customer {
     @Temporal(TemporalType.DATE)
     private LocalDate dateOfRegistration;
 
-    @Column(name="is_active")
+    @Column(name = "is_active")
     private boolean isActive;
+    @Column(name = "balance")
+    private BigDecimal balance;
+
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     @ToString.Exclude
     private List<PaymentTransaction> transactions = new ArrayList<>();
 
 
-
-    public Customer(long id, @NotNull String name, @NotNull String email, LocalDate dateOfRegistration, boolean active) {
+    public Customer(Long id, @NotNull String name, @NotNull String email, LocalDate dateOfRegistration, boolean active) {
         this.id = id;
         this.name = name;
         this.email = email;
+        this.dateOfRegistration = dateOfRegistration;
         this.isActive = active;
 
     }

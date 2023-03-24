@@ -9,11 +9,12 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -23,8 +24,14 @@ import java.time.ZonedDateTime;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class PaymentTransaction {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+        name = "UUID",
+        strategy = "org.hibernate.id.UUIDGenerator"
+    )
+    @Column(name = "id", updatable = false, nullable = false, unique = true)
+    private UUID id;
+
     @CreatedDate
     private ZonedDateTime transactionDate;
 

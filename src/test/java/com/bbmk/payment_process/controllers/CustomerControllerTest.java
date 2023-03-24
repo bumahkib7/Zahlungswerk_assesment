@@ -1,271 +1,274 @@
 package com.bbmk.payment_process.controllers;
 
-import com.bbmk.payment_process.Dto.TopInactiveCustomerDTO;
 import com.bbmk.payment_process.models.Customer;
 import com.bbmk.payment_process.repositories.CustomerRepository;
 import com.bbmk.payment_process.service.CustomerService;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class CustomerControllerTest {
+@ContextConfiguration(classes = {CustomerController.class})
+@ExtendWith(SpringExtension.class)
+class CustomerControllerTest {
+    @Autowired
+    private CustomerController customerController;
+
+    @MockBean
+    private CustomerService customerService;
+
     /**
-     * Method under test: {@link CustomerController#getCustomerById(Long)}
+     * Method under test: {@link CustomerController#getCustomersWithoutTransactions(Integer, Integer)}
      */
     @Test
-    public void testGetCustomerById() {
+    void testGetCustomersWithoutTransactions() {
+        //   Diffblue Cover was unable to write a Spring test,
+        //   so wrote a non-Spring test instead.
+        //   Diffblue AI was unable to find a test
 
         CustomerRepository customerRepository = mock(CustomerRepository.class);
-        when(customerRepository.findById(any())).thenReturn(Optional.of(new Customer()));
-        ResponseEntity<Customer> actualCustomerById = (new CustomerController(
-            new CustomerService(customerRepository, mock(JdbcTemplate.class)))).getCustomerById(1L);
-        assertTrue(actualCustomerById.hasBody());
-        assertTrue(actualCustomerById.getHeaders().isEmpty());
-        assertEquals(200, actualCustomerById.getStatusCodeValue());
-        verify(customerRepository).findById(any());
-    }
-
-
-    /**
-     * Method under test: {@link CustomerController#getCustomerById(Long)}
-     */
-    @Test
-    public void testGetCustomerById4() {
-
-        CustomerService customerService = mock(CustomerService.class);
-        when(customerService.getCustomerById(any())).thenReturn(new Customer());
-        ResponseEntity<Customer> actualCustomerById = (new CustomerController(customerService)).getCustomerById(1L);
-        assertTrue(actualCustomerById.hasBody());
-        assertTrue(actualCustomerById.getHeaders().isEmpty());
-        assertEquals(200, actualCustomerById.getStatusCodeValue());
-        verify(customerService).getCustomerById(any());
-    }
-
-    /**
-     * Method under test: {@link CustomerController#getCustomerById(Long)}
-     */
-    @Test
-    public void testGetCustomerById5() {
-
-        CustomerService customerService = mock(CustomerService.class);
-        when(customerService.getCustomerById(any())).thenReturn(null);
-        ResponseEntity<Customer> actualCustomerById = (new CustomerController(customerService)).getCustomerById(1L);
-        assertNull(actualCustomerById.getBody());
-        assertEquals(404, actualCustomerById.getStatusCodeValue());
-        assertTrue(actualCustomerById.getHeaders().isEmpty());
-        verify(customerService).getCustomerById(any());
-    }
-
-    /**
-     * Method under test: {@link CustomerController#getCustomersWithoutTransactions()}
-     */
-    @Test
-    public void testGetCustomersWithoutTransactions() {
-
-        CustomerRepository customerRepository = mock(CustomerRepository.class);
-        when(customerRepository.findCustomerByTransactionsLessThan0()).thenReturn(new ArrayList<>());
-        ResponseEntity<List<Customer>> actualCustomersWithoutTransactions = (new CustomerController(
-            new CustomerService(customerRepository, mock(JdbcTemplate.class)))).getCustomersWithoutTransactions();
+        when(customerRepository.findCustomerByTransactionsLessThan0(any()))
+            .thenReturn(new PageImpl<>(new ArrayList<>()));
+        ResponseEntity<Page<Customer>> actualCustomersWithoutTransactions = (new CustomerController(
+            new CustomerService(customerRepository, mock(NamedParameterJdbcTemplate.class))))
+            .getCustomersWithoutTransactions(1, 3);
         assertNull(actualCustomersWithoutTransactions.getBody());
         assertEquals(204, actualCustomersWithoutTransactions.getStatusCodeValue());
         assertTrue(actualCustomersWithoutTransactions.getHeaders().isEmpty());
-        verify(customerRepository).findCustomerByTransactionsLessThan0();
+        verify(customerRepository).findCustomerByTransactionsLessThan0(any());
     }
 
     /**
-     * Method under test: {@link CustomerController#getCustomersWithoutTransactions()}
+     * Method under test: {@link CustomerController#getCustomersWithoutTransactions(Integer, Integer)}
      */
     @Test
-    public void testGetCustomersWithoutTransactions2() {
+    void testGetCustomersWithoutTransactions2() {
+        //   Diffblue Cover was unable to write a Spring test,
+        //   so wrote a non-Spring test instead.
+        //   Diffblue AI was unable to find a test
 
         ArrayList<Customer> customerList = new ArrayList<>();
         customerList.add(new Customer());
         CustomerRepository customerRepository = mock(CustomerRepository.class);
-        when(customerRepository.findCustomerByTransactionsLessThan0()).thenReturn(customerList);
-        ResponseEntity<List<Customer>> actualCustomersWithoutTransactions = (new CustomerController(
-            new CustomerService(customerRepository, mock(JdbcTemplate.class)))).getCustomersWithoutTransactions();
+        when(customerRepository.findCustomerByTransactionsLessThan0(any()))
+            .thenReturn(new PageImpl<>(customerList));
+        ResponseEntity<Page<Customer>> actualCustomersWithoutTransactions = (new CustomerController(
+            new CustomerService(customerRepository, mock(NamedParameterJdbcTemplate.class))))
+            .getCustomersWithoutTransactions(1, 3);
         assertTrue(actualCustomersWithoutTransactions.hasBody());
         assertEquals(200, actualCustomersWithoutTransactions.getStatusCodeValue());
+        assertEquals(1, actualCustomersWithoutTransactions.getBody().toList().size());
         assertTrue(actualCustomersWithoutTransactions.getHeaders().isEmpty());
-        verify(customerRepository).findCustomerByTransactionsLessThan0();
+        verify(customerRepository).findCustomerByTransactionsLessThan0(any());
     }
 
-
     /**
-     * Method under test: {@link CustomerController#getCustomersWithoutTransactions()}
+     * Method under test: {@link CustomerController#getCustomersWithoutTransactions(Integer, Integer)}
      */
     @Test
-    public void testGetCustomersWithoutTransactions4() {
+    void testGetCustomersWithoutTransactions3() {
+        //   Diffblue Cover was unable to write a Spring test,
+        //   so wrote a non-Spring test instead.
+        //   Diffblue AI was unable to find a test
 
         CustomerService customerService = mock(CustomerService.class);
-        when(customerService.getCustomersWithoutTransactions()).thenReturn(new ArrayList<>());
-        ResponseEntity<List<Customer>> actualCustomersWithoutTransactions = (new CustomerController(customerService))
-            .getCustomersWithoutTransactions();
+        when(customerService.getCustomersWithoutTransactions(any()))
+            .thenReturn(new PageImpl<>(new ArrayList<>()));
+        ResponseEntity<Page<Customer>> actualCustomersWithoutTransactions = (new CustomerController(customerService))
+            .getCustomersWithoutTransactions(1, 3);
         assertNull(actualCustomersWithoutTransactions.getBody());
         assertEquals(204, actualCustomersWithoutTransactions.getStatusCodeValue());
         assertTrue(actualCustomersWithoutTransactions.getHeaders().isEmpty());
-        verify(customerService).getCustomersWithoutTransactions();
+        verify(customerService).getCustomersWithoutTransactions(any());
     }
 
     /**
-     * Method under test: {@link CustomerController#getAllCustomers()}
+     * Method under test: {@link CustomerController#getAllCustomers(Integer, Integer)}
      */
     @Test
-    public void testGetAllCustomers() {
+    void testGetAllCustomers() {
+        //   Diffblue Cover was unable to write a Spring test,
+        //   so wrote a non-Spring test instead.
+        //   Diffblue AI was unable to find a test
 
         CustomerRepository customerRepository = mock(CustomerRepository.class);
-        when(customerRepository.findAll()).thenReturn(new ArrayList<>());
-        ResponseEntity<List<Customer>> actualAllCustomers = (new CustomerController(
-            new CustomerService(customerRepository, mock(JdbcTemplate.class)))).getAllCustomers();
-        assertNull(actualAllCustomers.getBody());
-        assertEquals(204, actualAllCustomers.getStatusCodeValue());
-        assertTrue(actualAllCustomers.getHeaders().isEmpty());
-        verify(customerRepository).findAll();
-    }
-
-    /**
-     * Method under test: {@link CustomerController#getAllCustomers()}
-     */
-    @Test
-    public void testGetAllCustomers2() {
-
-        ArrayList<Customer> customerList = new ArrayList<>();
-        customerList.add(new Customer());
-        CustomerRepository customerRepository = mock(CustomerRepository.class);
-        when(customerRepository.findAll()).thenReturn(customerList);
-        ResponseEntity<List<Customer>> actualAllCustomers = (new CustomerController(
-            new CustomerService(customerRepository, mock(JdbcTemplate.class)))).getAllCustomers();
+        when(customerRepository.findAll((Pageable) any())).thenReturn(new PageImpl<>(new ArrayList<>()));
+        ResponseEntity<Page<Customer>> actualAllCustomers = (new CustomerController(
+            new CustomerService(customerRepository, mock(NamedParameterJdbcTemplate.class)))).getAllCustomers(1, 3);
         assertTrue(actualAllCustomers.hasBody());
         assertEquals(200, actualAllCustomers.getStatusCodeValue());
+        assertTrue(actualAllCustomers.getBody().toList().isEmpty());
         assertTrue(actualAllCustomers.getHeaders().isEmpty());
-        verify(customerRepository).findAll();
+        verify(customerRepository).findAll((Pageable) any());
     }
 
-
     /**
-     * Method under test: {@link CustomerController#getAllCustomers()}
+     * Method under test: {@link CustomerController#getAllCustomers(Integer, Integer)}
      */
     @Test
-    public void testGetAllCustomers4() {
+    void testGetAllCustomers2() {
+        //   Diffblue Cover was unable to write a Spring test,
+        //   so wrote a non-Spring test instead.
+        //   Diffblue AI was unable to find a test
 
         CustomerService customerService = mock(CustomerService.class);
-        when(customerService.getAllCustomers()).thenReturn(new ArrayList<>());
-        ResponseEntity<List<Customer>> actualAllCustomers = (new CustomerController(customerService)).getAllCustomers();
-        assertNull(actualAllCustomers.getBody());
-        assertEquals(204, actualAllCustomers.getStatusCodeValue());
+        when(customerService.getAllCustomers(any())).thenReturn(new PageImpl<>(new ArrayList<>()));
+        ResponseEntity<Page<Customer>> actualAllCustomers = (new CustomerController(customerService)).getAllCustomers(1,
+            3);
+        assertTrue(actualAllCustomers.hasBody());
+        assertEquals(200, actualAllCustomers.getStatusCodeValue());
+        assertTrue(actualAllCustomers.getBody().toList().isEmpty());
         assertTrue(actualAllCustomers.getHeaders().isEmpty());
-        verify(customerService).getAllCustomers();
+        verify(customerService).getAllCustomers(any());
     }
 
     /**
-     * Method under test: {@link CustomerController#getAllCustomersWithTransactions()}
+     * Method under test: {@link CustomerController#findCustomerByTransactions(Integer, Integer)}
      */
     @Test
-    public void testGetAllCustomersWithTransactions() {
+    void testFindCustomerByTransactions() {
+        //   Diffblue Cover was unable to write a Spring test,
+        //   so wrote a non-Spring test instead.
+        //   Diffblue AI was unable to find a test
 
         CustomerRepository customerRepository = mock(CustomerRepository.class);
-        when(customerRepository.findAllCustomersByTransactions()).thenReturn(new ArrayList<>());
-        ResponseEntity<List<Customer>> actualAllCustomersWithTransactions = (new CustomerController(
-            new CustomerService(customerRepository, mock(JdbcTemplate.class)))).getAllCustomersWithTransactions();
-        assertNull(actualAllCustomersWithTransactions.getBody());
-        assertEquals(204, actualAllCustomersWithTransactions.getStatusCodeValue());
-        assertTrue(actualAllCustomersWithTransactions.getHeaders().isEmpty());
-        verify(customerRepository).findAllCustomersByTransactions();
+        when(customerRepository.findAllCustomersByTransactions(any()))
+            .thenReturn(new PageImpl<>(new ArrayList<>()));
+        ResponseEntity<Page<Customer>> actualFindCustomerByTransactionsResult = (new CustomerController(
+            new CustomerService(customerRepository, mock(NamedParameterJdbcTemplate.class)))).findCustomerByTransactions(1,
+            3);
+        assertNull(actualFindCustomerByTransactionsResult.getBody());
+        assertEquals(204, actualFindCustomerByTransactionsResult.getStatusCodeValue());
+        assertTrue(actualFindCustomerByTransactionsResult.getHeaders().isEmpty());
+        verify(customerRepository).findAllCustomersByTransactions(any());
     }
 
     /**
-     * Method under test: {@link CustomerController#getAllCustomersWithTransactions()}
+     * Method under test: {@link CustomerController#findCustomerByTransactions(Integer, Integer)}
      */
     @Test
-    public void testGetAllCustomersWithTransactions2() {
+    void testFindCustomerByTransactions2() {
+        //   Diffblue Cover was unable to write a Spring test,
+        //   so wrote a non-Spring test instead.
+        //   Diffblue AI was unable to find a test
 
         ArrayList<Customer> customerList = new ArrayList<>();
         customerList.add(new Customer());
         CustomerRepository customerRepository = mock(CustomerRepository.class);
-        when(customerRepository.findAllCustomersByTransactions()).thenReturn(customerList);
-        ResponseEntity<List<Customer>> actualAllCustomersWithTransactions = (new CustomerController(
-            new CustomerService(customerRepository, mock(JdbcTemplate.class)))).getAllCustomersWithTransactions();
-        assertTrue(actualAllCustomersWithTransactions.hasBody());
-        assertEquals(200, actualAllCustomersWithTransactions.getStatusCodeValue());
-        assertTrue(actualAllCustomersWithTransactions.getHeaders().isEmpty());
-        verify(customerRepository).findAllCustomersByTransactions();
+        when(customerRepository.findAllCustomersByTransactions(any()))
+            .thenReturn(new PageImpl<>(customerList));
+        ResponseEntity<Page<Customer>> actualFindCustomerByTransactionsResult = (new CustomerController(
+            new CustomerService(customerRepository, mock(NamedParameterJdbcTemplate.class))))
+            .findCustomerByTransactions(1, 3);
+        assertTrue(actualFindCustomerByTransactionsResult.hasBody());
+        assertEquals(200, actualFindCustomerByTransactionsResult.getStatusCodeValue());
+        assertEquals(1, actualFindCustomerByTransactionsResult.getBody().toList().size());
+        assertTrue(actualFindCustomerByTransactionsResult.getHeaders().isEmpty());
+        verify(customerRepository).findAllCustomersByTransactions(any());
     }
 
-
     /**
-     * Method under test: {@link CustomerController#getAllCustomersWithTransactions()}
+     * Method under test: {@link CustomerController#findCustomerByTransactions(Integer, Integer)}
      */
     @Test
-    public void testGetAllCustomersWithTransactions4() {
+    void testFindCustomerByTransactions3() {
+        //   Diffblue Cover was unable to write a Spring test,
+        //   so wrote a non-Spring test instead.
+        //   Diffblue AI was unable to find a test
 
         CustomerService customerService = mock(CustomerService.class);
-        when(customerService.findCustomerByTransactions()).thenReturn(new ArrayList<>());
-        ResponseEntity<List<Customer>> actualAllCustomersWithTransactions = (new CustomerController(customerService))
-            .getAllCustomersWithTransactions();
-        assertNull(actualAllCustomersWithTransactions.getBody());
-        assertEquals(204, actualAllCustomersWithTransactions.getStatusCodeValue());
-        assertTrue(actualAllCustomersWithTransactions.getHeaders().isEmpty());
-        verify(customerService).findCustomerByTransactions();
+        when(customerService.findCustomerByTransactions(any())).thenReturn(new PageImpl<>(new ArrayList<>()));
+        ResponseEntity<Page<Customer>> actualFindCustomerByTransactionsResult = (new CustomerController(customerService))
+            .findCustomerByTransactions(1, 3);
+        assertNull(actualFindCustomerByTransactionsResult.getBody());
+        assertEquals(204, actualFindCustomerByTransactionsResult.getStatusCodeValue());
+        assertTrue(actualFindCustomerByTransactionsResult.getHeaders().isEmpty());
+        verify(customerService).findCustomerByTransactions(any());
     }
 
     /**
-     * Method under test: {@link CustomerController#getTopInactiveCustomers()}
+     * Method under test: {@link CustomerController#getTopInactiveCustomersByYears(int, int)}
      */
     @Test
-    public void testGetTopInactiveCustomers() throws DataAccessException {
+    void testGetTopInactiveCustomersByYears() throws DataAccessException {
+        //   Diffblue Cover was unable to write a Spring test,
+        //   so wrote a non-Spring test instead.
+        //   Diffblue AI was unable to find a test
 
-        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
-        when(jdbcTemplate.query((String) any(), (RowMapper<Object[]>) any())).thenReturn(new ArrayList<>());
-        ResponseEntity<List<TopInactiveCustomerDTO>> actualTopInactiveCustomers = (new CustomerController(
-            new CustomerService(mock(CustomerRepository.class), jdbcTemplate))).getTopInactiveCustomers();
-        assertNull(actualTopInactiveCustomers.getBody());
-        assertEquals(204, actualTopInactiveCustomers.getStatusCodeValue());
-        assertTrue(actualTopInactiveCustomers.getHeaders().isEmpty());
-        verify(jdbcTemplate).query((String) any(), (RowMapper<Object[]>) any());
+        NamedParameterJdbcTemplate namedParameterJdbcTemplate = mock(NamedParameterJdbcTemplate.class);
+        when(namedParameterJdbcTemplate.queryForList(any(), (SqlParameterSource) any()))
+            .thenReturn(new ArrayList<>());
+        ResponseEntity<List<Map<String, Object>>> actualTopInactiveCustomersByYears = (new CustomerController(
+            new CustomerService(mock(CustomerRepository.class), namedParameterJdbcTemplate)))
+            .getTopInactiveCustomersByYears(1, 1);
+        assertTrue(actualTopInactiveCustomersByYears.hasBody());
+        assertEquals(200, actualTopInactiveCustomersByYears.getStatusCodeValue());
+        assertTrue(actualTopInactiveCustomersByYears.getHeaders().isEmpty());
+        verify(namedParameterJdbcTemplate).queryForList(any(), (SqlParameterSource) any());
     }
 
-
     /**
-     * Method under test: {@link CustomerController#getTopInactiveCustomers()}
+     * Method under test: {@link CustomerController#getTopInactiveCustomersByYears(int, int)}
      */
     @Test
-    public void testGetTopInactiveCustomers3() {
+    void testGetTopInactiveCustomersByYears2() {
+        //   Diffblue Cover was unable to write a Spring test,
+        //   so wrote a non-Spring test instead.
+        //   Diffblue AI was unable to find a test
 
         CustomerService customerService = mock(CustomerService.class);
-        when(customerService.getTopInactiveCustomers()).thenReturn(new ArrayList<>());
-        ResponseEntity<List<TopInactiveCustomerDTO>> actualTopInactiveCustomers = (new CustomerController(
-            customerService)).getTopInactiveCustomers();
-        assertNull(actualTopInactiveCustomers.getBody());
-        assertEquals(204, actualTopInactiveCustomers.getStatusCodeValue());
-        assertTrue(actualTopInactiveCustomers.getHeaders().isEmpty());
-        verify(customerService).getTopInactiveCustomers();
+        when(customerService.getTopInactiveCustomersByYears(anyInt(), anyInt())).thenReturn(new ArrayList<>());
+        ResponseEntity<List<Map<String, Object>>> actualTopInactiveCustomersByYears = (new CustomerController(
+            customerService)).getTopInactiveCustomersByYears(1, 1);
+        assertTrue(actualTopInactiveCustomersByYears.hasBody());
+        assertEquals(200, actualTopInactiveCustomersByYears.getStatusCodeValue());
+        assertTrue(actualTopInactiveCustomersByYears.getHeaders().isEmpty());
+        verify(customerService).getTopInactiveCustomersByYears(anyInt(), anyInt());
     }
 
     /**
-     * Method under test: {@link CustomerController#getTopInactiveCustomers()}
+     * Method under test: {@link CustomerController#getCustomerById(Long)}
      */
     @Test
-    public void testGetTopInactiveCustomers4() {
+    @Disabled("TODO: Complete this test")
+    void testGetCustomerById() throws Exception {
+        // TODO: Complete this test.
+        //   Diffblue AI was unable to find a test
 
-        ArrayList<TopInactiveCustomerDTO> topInactiveCustomerDTOList = new ArrayList<>();
-        topInactiveCustomerDTOList.add(new TopInactiveCustomerDTO());
-        CustomerService customerService = mock(CustomerService.class);
-        when(customerService.getTopInactiveCustomers()).thenReturn(topInactiveCustomerDTOList);
-        ResponseEntity<List<TopInactiveCustomerDTO>> actualTopInactiveCustomers = (new CustomerController(
-            customerService)).getTopInactiveCustomers();
-        assertTrue(actualTopInactiveCustomers.hasBody());
-        assertTrue(actualTopInactiveCustomers.getHeaders().isEmpty());
-        assertEquals(200, actualTopInactiveCustomers.getStatusCodeValue());
-        verify(customerService).getTopInactiveCustomers();
+        // Arrange
+        // TODO: Populate arranged inputs
+        Object[] uriVariables = new Object[]{1L};
+        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders.get("/api/v1/Customer/{id}", uriVariables);
+        Object[] controllers = new Object[]{customerController};
+        MockMvc buildResult = MockMvcBuilders.standaloneSetup(controllers).build();
+
+        // Act
+        ResultActions actualPerformResult = buildResult.perform(requestBuilder);
+
+        // Assert
+        // TODO: Add assertions on result
     }
 }
 

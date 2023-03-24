@@ -6,11 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.Year;
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -18,16 +15,13 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     @NotNull Page<Customer> findAll(@NotNull Pageable pageable);
 
-    @NotNull Optional<Customer> findById(@NotNull Long id);
+    @NotNull
+    Optional<Customer> findById(@NotNull Long id);
 
     @Query("SELECT DISTINCT c FROM Customer c LEFT JOIN c.transactions t WHERE t.id IS NULL ORDER BY c.name")
-    List<Customer> findCustomerByTransactionsLessThan0();
-
+    Page<Customer> findCustomerByTransactionsLessThan0(Pageable pageable);
 
     @Query("SELECT DISTINCT c FROM Customer c INNER JOIN c.transactions t WHERE t.customer = c ORDER BY c.name")
-    List<Customer> findAllCustomersByTransactions();
-
-    @Query("SELECT SUM(t.grossAmount) FROM Customer c JOIN c.transactions t WHERE c.id = :id AND FUNCTION('YEAR', t.transactionDate) = :previousYear")
-    Long findCustomerTransactionsByYear(@Param("id") Long id, @Param("previousYear") Year previousYear);
+    Page<Customer> findAllCustomersByTransactions(Pageable pageable);
 
 }

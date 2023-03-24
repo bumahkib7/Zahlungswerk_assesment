@@ -24,3 +24,8 @@ SELECT customer_id, COUNT(*) as num_transactions
                    GROUP BY customer_id
                    ORDER BY num_transactions DESC
                    LIMIT 5;
+
+CREATE INDEX idx_merchant_id ON merchant (merchant_id);
+CREATE INDEX idx_payment_transaction_merchant_id ON payment_transaction (merchant_id);
+CREATE INDEX idx_payment_transaction_transaction_date ON payment_transaction (transaction_date);
+

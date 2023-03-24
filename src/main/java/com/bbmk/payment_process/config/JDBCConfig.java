@@ -38,5 +38,5 @@ public class JDBCConfig {
         return new JdbcTemplate(dataSource);
     }
 
-    // Other beans and configurations...
+
 }

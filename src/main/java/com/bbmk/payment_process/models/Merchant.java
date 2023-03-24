@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,11 +19,15 @@ import java.util.List;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Merchant {
 
+    @Column(name = "merchant_id")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "merchant_id")
     private Long id;
+    @Column(name = "balance")
+    private BigDecimal balance;
 
+    @Version
+    private Long version;
     @NotNull
     private String name;
 
@@ -38,7 +43,7 @@ public class Merchant {
 
     }
 
-    public Merchant(long id, String name, boolean active) {
+    public Merchant(Long id, String name, boolean active) {
         this.id = id;
         this.name = name;
         this.active = active;

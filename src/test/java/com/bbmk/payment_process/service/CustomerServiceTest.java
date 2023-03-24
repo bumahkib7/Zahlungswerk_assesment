@@ -1,33 +1,36 @@
 package com.bbmk.payment_process.service;
 
+import com.bbmk.payment_process.Dto.CustomerDTO;
 import com.bbmk.payment_process.models.Customer;
+import com.bbmk.payment_process.models.PaymentTransaction;
 import com.bbmk.payment_process.repositories.CustomerRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ContextConfiguration(classes = {CustomerService.class})
-@RunWith(SpringJUnit4ClassRunner.class)
-public class CustomerServiceTest {
+@ExtendWith(SpringExtension.class)
+class CustomerServiceTest {
     @MockBean
     private CustomerRepository customerRepository;
 
@@ -35,211 +38,149 @@ public class CustomerServiceTest {
     private CustomerService customerService;
 
     @MockBean
-    private JdbcTemplate jdbcTemplate;
+    private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     /**
-     * Method under test: {@link CustomerService#getAllCustomers()}
+     * Method under test: {@link CustomerService#findCustomerById(Long)}
      */
     @Test
-    public void testGetAllCustomers() {
-        ArrayList<Customer> customerList = new ArrayList<>();
-        when(customerRepository.findAll()).thenReturn(customerList);
-        List<Customer> actualAllCustomers = customerService.getAllCustomers();
-        assertSame(customerList, actualAllCustomers);
-        assertTrue(actualAllCustomers.isEmpty());
-        verify(customerRepository).findAll();
-    }
+    void testFindCustomerById() {
 
-    /**
-     * Method under test: {@link CustomerService#getAllCustomers()}
-     */
-    @Test
-    public void testGetAllCustomers2() {
-        when(customerRepository.findAll()).thenThrow(new EntityNotFoundException("An error occurred"));
-        assertThrows(EntityNotFoundException.class, () -> customerService.getAllCustomers());
-        verify(customerRepository).findAll();
-    }
 
-    /**
-     * Method under test: {@link CustomerService#getCustomerById(Long)}
-     */
-    @Test
-    public void testGetCustomerById() {
-        Customer customer = new Customer();
-        when(customerRepository.findById(any())).thenReturn(Optional.of(customer));
-        assertSame(customer, customerService.getCustomerById(1L));
+        CustomerRepository customerRepository = mock(CustomerRepository.class);
+        when(customerRepository.findById(any())).thenReturn(Optional.of(new Customer(1L,
+            "@NotNull method %s.%s must not return null", "jane.doe@example.org", LocalDate.ofEpochDay(1L), true)));
+        CustomerDTO actualFindCustomerByIdResult = (new CustomerService(customerRepository,
+            mock(NamedParameterJdbcTemplate.class))).findCustomerById(1L);
+        assertEquals("1970-01-02", actualFindCustomerByIdResult.getDateOfRegistration().toString());
+        assertTrue(actualFindCustomerByIdResult.isActive());
+        assertTrue(actualFindCustomerByIdResult.getTransactions().isEmpty());
+        assertEquals("@NotNull method %s.%s must not return null", actualFindCustomerByIdResult.getName());
+        assertEquals(1L, actualFindCustomerByIdResult.getId().longValue());
+        assertEquals("jane.doe@example.org", actualFindCustomerByIdResult.getEmail());
         verify(customerRepository).findById(any());
     }
 
     /**
-     * Method under test: {@link CustomerService#getCustomerById(Long)}
+     * Method under test: {@link CustomerService#findCustomerById(Long)}
      */
     @Test
-    public void testGetCustomerById2() {
+    void testFindCustomerById2() {
+
+        CustomerRepository customerRepository = mock(CustomerRepository.class);
+        LocalDate dateOfRegistration = LocalDate.ofEpochDay(1L);
+        BigDecimal balance = BigDecimal.valueOf(42L);
+        ArrayList<PaymentTransaction> paymentTransactionList = new ArrayList<>();
+        when(customerRepository.findById(any()))
+            .thenReturn(Optional.of(new Customer(1L, 1L, "@NotNull method %s.%s must not return null",
+                "jane.doe@example.org", dateOfRegistration, true, balance, paymentTransactionList)));
+        CustomerDTO actualFindCustomerByIdResult = (new CustomerService(customerRepository,
+            mock(NamedParameterJdbcTemplate.class))).findCustomerById(1L);
+        assertEquals("1970-01-02", actualFindCustomerByIdResult.getDateOfRegistration().toString());
+        assertTrue(actualFindCustomerByIdResult.isActive());
+        assertEquals(paymentTransactionList, actualFindCustomerByIdResult.getTransactions());
+        assertEquals("@NotNull method %s.%s must not return null", actualFindCustomerByIdResult.getName());
+        assertEquals(1L, actualFindCustomerByIdResult.getId().longValue());
+        assertEquals("jane.doe@example.org", actualFindCustomerByIdResult.getEmail());
+        verify(customerRepository).findById(any());
+    }
+
+    /**
+     * Method under test: {@link CustomerService#findCustomerById(Long)}
+     */
+    @Test
+    void testFindCustomerById3() {
+
+        CustomerRepository customerRepository = mock(CustomerRepository.class);
         when(customerRepository.findById(any())).thenReturn(Optional.empty());
-        assertThrows(EntityNotFoundException.class, () -> customerService.getCustomerById(1L));
+        assertThrows(EntityNotFoundException.class,
+            () -> (new CustomerService(customerRepository, mock(NamedParameterJdbcTemplate.class))).findCustomerById(1L));
         verify(customerRepository).findById(any());
     }
 
     /**
-     * Method under test: {@link CustomerService#getCustomerById(Long)}
+     * Method under test: {@link CustomerService#getAllCustomers(Pageable)}
      */
     @Test
-    public void testGetCustomerById3() {
-        when(customerRepository.findById(any())).thenThrow(new EntityNotFoundException("An error occurred"));
-        assertThrows(EntityNotFoundException.class, () -> customerService.getCustomerById(1L));
-        verify(customerRepository).findById(any());
+    void testGetAllCustomers() {
+        PageImpl<Customer> pageImpl = new PageImpl<>(new ArrayList<>());
+        when(customerRepository.findAll((Pageable) any())).thenReturn(pageImpl);
+        Page<Customer> actualAllCustomers = customerService.getAllCustomers(null);
+        assertSame(pageImpl, actualAllCustomers);
+        assertTrue(actualAllCustomers.toList().isEmpty());
+        verify(customerRepository).findAll((Pageable) any());
     }
 
     /**
-     * Method under test: {@link CustomerService#getCustomersWithoutTransactions()}
+     * Method under test: {@link CustomerService#getAllCustomers(Pageable)}
      */
     @Test
-    public void testGetCustomersWithoutTransactions() {
-        ArrayList<Customer> customerList = new ArrayList<>();
-        when(customerRepository.findCustomerByTransactionsLessThan0()).thenReturn(customerList);
-        List<Customer> actualCustomersWithoutTransactions = customerService.getCustomersWithoutTransactions();
-        assertSame(customerList, actualCustomersWithoutTransactions);
-        assertTrue(actualCustomersWithoutTransactions.isEmpty());
-        verify(customerRepository).findCustomerByTransactionsLessThan0();
+    void testGetAllCustomers2() {
+        when(customerRepository.findAll((Pageable) any())).thenThrow(new EntityNotFoundException("An error occurred"));
+        assertThrows(EntityNotFoundException.class, () -> customerService.getAllCustomers(null));
+        verify(customerRepository).findAll((Pageable) any());
     }
 
     /**
-     * Method under test: {@link CustomerService#getCustomersWithoutTransactions()}
+     * Method under test: {@link CustomerService#getCustomersWithoutTransactions(Pageable)}
      */
     @Test
-    public void testGetCustomersWithoutTransactions2() {
-        when(customerRepository.findCustomerByTransactionsLessThan0())
+    void testGetCustomersWithoutTransactions() {
+        PageImpl<Customer> pageImpl = new PageImpl<>(new ArrayList<>());
+        when(customerRepository.findCustomerByTransactionsLessThan0(any())).thenReturn(pageImpl);
+        Page<Customer> actualCustomersWithoutTransactions = customerService.getCustomersWithoutTransactions(null);
+        assertSame(pageImpl, actualCustomersWithoutTransactions);
+        assertTrue(actualCustomersWithoutTransactions.toList().isEmpty());
+        verify(customerRepository).findCustomerByTransactionsLessThan0(any());
+    }
+
+    /**
+     * Method under test: {@link CustomerService#getCustomersWithoutTransactions(Pageable)}
+     */
+    @Test
+    void testGetCustomersWithoutTransactions2() {
+        when(customerRepository.findCustomerByTransactionsLessThan0(any()))
             .thenThrow(new EntityNotFoundException("An error occurred"));
-        assertThrows(EntityNotFoundException.class, () -> customerService.getCustomersWithoutTransactions());
-        verify(customerRepository).findCustomerByTransactionsLessThan0();
+        assertThrows(EntityNotFoundException.class, () -> customerService.getCustomersWithoutTransactions(null));
+        verify(customerRepository).findCustomerByTransactionsLessThan0(any());
     }
 
     /**
-     * Method under test: {@link CustomerService.CustomerRawMapper#mapRow(ResultSet, int)}
+     * Method under test: {@link CustomerService#findCustomerByTransactions(Pageable)}
      */
     @Test
-    public void testCustomerRawMapperMapRow() throws SQLException {
-        CustomerService.CustomerRawMapper customerRawMapper = new CustomerService.CustomerRawMapper();
-        Date date = mock(Date.class);
-        when(date.toLocalDate()).thenReturn(LocalDate.ofEpochDay(1L));
-        ResultSet resultSet = mock(ResultSet.class);
-        when(resultSet.getBoolean(any())).thenReturn(true);
-        when(resultSet.getLong(any())).thenReturn(1L);
-        when(resultSet.getDate(any())).thenReturn(date);
-        when(resultSet.getInt(any())).thenReturn(1);
-        when(resultSet.getString(any())).thenReturn("String");
-        assertEquals(2, customerRawMapper.mapRow(resultSet, 10).length);
-        verify(resultSet).getBoolean(any());
-        verify(resultSet).getInt(any());
-        verify(resultSet, atLeast(1)).getString(any());
-        verify(resultSet).getDate(any());
-        verify(resultSet).getLong(any());
-        verify(date).toLocalDate();
+    void testFindCustomerByTransactions() {
+        PageImpl<Customer> pageImpl = new PageImpl<>(new ArrayList<>());
+        when(customerRepository.findAllCustomersByTransactions(any())).thenReturn(pageImpl);
+        Page<Customer> actualFindCustomerByTransactionsResult = customerService.findCustomerByTransactions(null);
+        assertSame(pageImpl, actualFindCustomerByTransactionsResult);
+        assertTrue(actualFindCustomerByTransactionsResult.toList().isEmpty());
+        verify(customerRepository).findAllCustomersByTransactions(any());
     }
 
     /**
-     * Method under test: {@link CustomerService#findCustomerByTransactions()}
+     * Method under test: {@link CustomerService#findCustomerByTransactions(Pageable)}
      */
     @Test
-    public void testFindCustomerByTransactions() {
-        ArrayList<Customer> customerList = new ArrayList<>();
-        when(customerRepository.findAllCustomersByTransactions()).thenReturn(customerList);
-        List<Customer> actualFindCustomerByTransactionsResult = customerService.findCustomerByTransactions();
-        assertSame(customerList, actualFindCustomerByTransactionsResult);
-        assertTrue(actualFindCustomerByTransactionsResult.isEmpty());
-        verify(customerRepository).findAllCustomersByTransactions();
-    }
-
-    /**
-     * Method under test: {@link CustomerService#findCustomerByTransactions()}
-     */
-    @Test
-    public void testFindCustomerByTransactions2() {
-        when(customerRepository.findAllCustomersByTransactions())
+    void testFindCustomerByTransactions2() {
+        when(customerRepository.findAllCustomersByTransactions(any()))
             .thenThrow(new EntityNotFoundException("An error occurred"));
-        assertThrows(EntityNotFoundException.class, () -> customerService.findCustomerByTransactions());
-        verify(customerRepository).findAllCustomersByTransactions();
+        assertThrows(EntityNotFoundException.class, () -> customerService.findCustomerByTransactions(null));
+        verify(customerRepository).findAllCustomersByTransactions(any());
     }
 
     /**
-     * Method under test: {@link CustomerService#getTopInactiveCustomers()}
+     * Method under test: {@link CustomerService#getTopInactiveCustomersByYears(int, int)}
      */
     @Test
-    public void testGetTopInactiveCustomers() throws DataAccessException {
-        when(jdbcTemplate.query((String) any(), (RowMapper<Object[]>) any())).thenReturn(new ArrayList<>());
-        assertTrue(customerService.getTopInactiveCustomers().isEmpty());
-        verify(jdbcTemplate).query((String) any(), (RowMapper<Object[]>) any());
-    }
-
-
-    /**
-     * Method under test: {@link CustomerService#getInactiveCustomers()}
-     */
-    @Test
-    public void testGetInactiveCustomers() {
-        when(customerRepository.findAll()).thenReturn(new ArrayList<>());
-        assertTrue(customerService.getInactiveCustomers().isEmpty());
-        verify(customerRepository).findAll();
-    }
-
-    /**
-     * Method under test: {@link CustomerService#getInactiveCustomers()}
-     */
-    @Test
-    public void testGetInactiveCustomers2() {
-        ArrayList<Customer> customerList = new ArrayList<>();
-        customerList.add(new Customer());
-        when(customerRepository.findCustomerTransactionsByYear(any(), any())).thenReturn(1L);
-        when(customerRepository.findAll()).thenReturn(customerList);
-        assertTrue(customerService.getInactiveCustomers().isEmpty());
-        verify(customerRepository, atLeast(1)).findCustomerTransactionsByYear(any(), any());
-        verify(customerRepository).findAll();
-    }
-
-    /**
-     * Method under test: {@link CustomerService#getInactiveCustomers()}
-     */
-    @Test
-    public void testGetInactiveCustomers3() {
-        ArrayList<Customer> customerList = new ArrayList<>();
-        customerList.add(new Customer());
-        when(customerRepository.findCustomerTransactionsByYear(any(), any())).thenReturn(0L);
-        when(customerRepository.findAll()).thenReturn(customerList);
-        assertTrue(customerService.getInactiveCustomers().isEmpty());
-        verify(customerRepository).findCustomerTransactionsByYear(any(), any());
-        verify(customerRepository).findAll();
-    }
-
-    /**
-     * Method under test: {@link CustomerService#getInactiveCustomers()}
-     */
-    @Test
-    public void testGetInactiveCustomers4() {
-        ArrayList<Customer> customerList = new ArrayList<>();
-        customerList.add(new Customer());
-        customerList.add(new Customer());
-        when(customerRepository.findCustomerTransactionsByYear(any(), any())).thenReturn(1L);
-        when(customerRepository.findAll()).thenReturn(customerList);
-        assertTrue(customerService.getInactiveCustomers().isEmpty());
-        verify(customerRepository, atLeast(1)).findCustomerTransactionsByYear(any(), any());
-        verify(customerRepository).findAll();
-    }
-
-
-    /**
-     * Method under test: {@link CustomerService#getInactiveCustomers()}
-     */
-    @Test
-    public void testGetInactiveCustomers6() {
-        ArrayList<Customer> customerList = new ArrayList<>();
-        customerList.add(new Customer());
-        when(customerRepository.findCustomerTransactionsByYear(any(), any()))
-            .thenThrow(new EntityNotFoundException("An error occurred"));
-        when(customerRepository.findAll()).thenReturn(customerList);
-        assertThrows(EntityNotFoundException.class, () -> customerService.getInactiveCustomers());
-        verify(customerRepository).findCustomerTransactionsByYear(any(), any());
-        verify(customerRepository).findAll();
+    void testGetTopInactiveCustomersByYears() throws DataAccessException {
+        ArrayList<Map<String, Object>> mapList = new ArrayList<>();
+        when(namedParameterJdbcTemplate.queryForList(any(), (SqlParameterSource) any())).thenReturn(mapList);
+        List<Map<String, Object>> actualTopInactiveCustomersByYears = customerService.getTopInactiveCustomersByYears(1,
+            1);
+        assertSame(mapList, actualTopInactiveCustomersByYears);
+        assertTrue(actualTopInactiveCustomersByYears.isEmpty());
+        verify(namedParameterJdbcTemplate).queryForList(any(), (SqlParameterSource) any());
     }
 }
 
