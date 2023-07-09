@@ -50,7 +50,7 @@ public class CustomerController {
         @RequestParam(defaultValue = "10") Integer size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Customer> customerPage = customerService.getCustomersWithoutTransactions(pageable);
-        return customerPage.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(customerPage);
+        return !customerPage.isEmpty() ? ResponseEntity.ok(customerPage) : ResponseEntity.noContent().build();
     }
 
 
@@ -69,7 +69,7 @@ public class CustomerController {
         @RequestParam(defaultValue = "10") Integer size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Customer> customerPage = customerService.findCustomerByTransactions(pageable);
-        return customerPage.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(customerPage);
+        return !customerPage.isEmpty() ? ResponseEntity.ok(customerPage) : ResponseEntity.noContent().build();
     }
 
 

@@ -15,7 +15,6 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -79,31 +78,26 @@ class MerchantServiceTest {
      */
     @Test
     void testGetMerchantsWithHighestTurnover() throws DataAccessException {
-        when(namedParameterJdbcTemplate.queryForList(any(), (SqlParameterSource) any(),
-            (Class<BigDecimal>) any())).thenReturn(new ArrayList<>());
+        when(namedParameterJdbcTemplate.query(anyString(), any(SqlParameterSource.class), any(RowMapper.class)))
+            .thenReturn(new ArrayList<>());
         assertTrue(merchantService.getMerchantsWithHighestTurnover(1, true).isEmpty());
-        verify(namedParameterJdbcTemplate).queryForList(any(), (SqlParameterSource) any(),
-            (Class<BigDecimal>) any());
+        verify(namedParameterJdbcTemplate).query(anyString(), any(SqlParameterSource.class), any(RowMapper.class));
     }
+
 
     /**
      * Method under test: {@link MerchantService#getMerchantsWithHighestTurnover(int, boolean)}
      */
     @Test
     void testGetMerchantsWithHighestTurnover2() throws DataAccessException {
-        ArrayList<BigDecimal> bigDecimalList = new ArrayList<>();
-        bigDecimalList.add(BigDecimal.valueOf(42L));
-        ArrayList<Object> objectList = new ArrayList<>();
-        when(namedParameterJdbcTemplate.query(any(), (SqlParameterSource) any(), (RowMapper<Object>) any()))
-            .thenReturn(objectList);
-        when(namedParameterJdbcTemplate.queryForList(any(), (SqlParameterSource) any(),
-            (Class<BigDecimal>) any())).thenReturn(bigDecimalList);
+        ArrayList<Merchant> merchantList = new ArrayList<>();
+        merchantList.add(new Merchant()); // Add a Merchant instance
+        when(namedParameterJdbcTemplate.query(anyString(), any(SqlParameterSource.class), any(RowMapper.class)))
+            .thenReturn(merchantList);
         List<Merchant> actualMerchantsWithHighestTurnover = merchantService.getMerchantsWithHighestTurnover(1, true);
-        assertSame(objectList, actualMerchantsWithHighestTurnover);
-        assertTrue(actualMerchantsWithHighestTurnover.isEmpty());
-        verify(namedParameterJdbcTemplate).query(any(), (SqlParameterSource) any(), (RowMapper<Object>) any());
-        verify(namedParameterJdbcTemplate).queryForList(any(), (SqlParameterSource) any(),
-            (Class<BigDecimal>) any());
+        assertSame(merchantList, actualMerchantsWithHighestTurnover);
+        assertFalse(actualMerchantsWithHighestTurnover.isEmpty());
+        verify(namedParameterJdbcTemplate).query(anyString(), any(SqlParameterSource.class), any(RowMapper.class));
     }
 
     /**

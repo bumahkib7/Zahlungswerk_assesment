@@ -56,7 +56,7 @@ public class PaymentController {
     @GetMapping("/all")
     public ResponseEntity<List<PaymentTransaction>> getAllTransactions() throws EmptyTransactionListException {
         List<PaymentTransaction> transactions = transactionService.getAllTransactions();
-        return transactions.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(transactions);
+        return transactions.stream().findAny().map(t -> ResponseEntity.ok(transactions)).orElse(ResponseEntity.noContent().build());
     }
 
     /**
@@ -69,7 +69,9 @@ public class PaymentController {
     public ResponseEntity<?> getTransactionsByMerchant(@PathVariable Long merchantId) {
         return Optional.ofNullable(merchantId)
             .map(transactionService::getTransactionsByMerchant)
-            .map(transactions -> transactions.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(transactions))
+            .map(transactions -> !transactions.isEmpty()
+                ? ResponseEntity.ok(transactions)
+                : ResponseEntity.noContent().build())
             .orElse(ResponseEntity.badRequest().build());
     }
 

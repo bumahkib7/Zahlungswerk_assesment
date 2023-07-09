@@ -56,7 +56,7 @@ public class MerchantController {
                                                                        boolean isActive
     ) {
         if (year < 1800 || year > 2099) {
-            log.error("invalid year" + year);
+            log.error("invalid year: " + year);
             throw new IllegalArgumentException("Invalid year provided");
         }
         List<Merchant> merchants = merchantService.getMerchantsWithHighestTurnover(year, isActive);

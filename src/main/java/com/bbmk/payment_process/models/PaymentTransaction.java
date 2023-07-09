@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.GenericGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.math.BigDecimal;
@@ -22,7 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Entity
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public class PaymentTransaction {
+public class PaymentTransaction implements Comparable<PaymentTransaction> {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(
@@ -77,5 +78,10 @@ public class PaymentTransaction {
         result = 31 * result + (getCustomer() != null ? getCustomer().hashCode() : 0);
         result = 31 * result + (getMerchant() != null ? getMerchant().hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public int compareTo(@NotNull PaymentTransaction o) {
+        return 0;
     }
 }

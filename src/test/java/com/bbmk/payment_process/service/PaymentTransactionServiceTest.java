@@ -8,6 +8,7 @@ import com.bbmk.payment_process.models.constants.VatRate;
 import com.bbmk.payment_process.repositories.CustomerRepository;
 import com.bbmk.payment_process.repositories.MerchantRepository;
 import com.bbmk.payment_process.repositories.PaymentTransactionRepository;
+import com.bbmk.payment_process.requests.TransferMoneyRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,11 +62,12 @@ class PaymentTransactionServiceTest {
 
         when(customerRepository.findById(customerId)).thenReturn(Optional.of(customer));
         when(merchantRepository.findById(merchantId)).thenReturn(Optional.of(merchant));
+        when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paymentTransactionRepository.existsById(any(UUID.class))).thenReturn(false);
+        doNothing().when(moneyTransferService).transferMoney(any(TransferMoneyRequest.class));
 
-        // Act
         PaymentTransaction actualCreateTransactionResult = paymentTransactionService.createTransaction(customerId, merchantId, amount, vatRate);
 
-        // Assert
         assertEquals(customerId, actualCreateTransactionResult.getCustomer().getId());
         assertEquals(merchantId, actualCreateTransactionResult.getMerchant().getId());
         assertEquals(amount, actualCreateTransactionResult.getGrossAmount());
@@ -76,7 +78,7 @@ class PaymentTransactionServiceTest {
      * Method under test: {@link PaymentTransactionService#getAllTransactions()}
      */
     @Test
-    void testGetAllTransactions() throws EmptyTransactionListException {
+    void testGetAllTransactions() {
         when(paymentTransactionRepository.findAll()).thenReturn(new ArrayList<>());
         assertThrows(EmptyTransactionListException.class, () -> paymentTransactionService.getAllTransactions());
         verify(paymentTransactionRepository).findAll();
