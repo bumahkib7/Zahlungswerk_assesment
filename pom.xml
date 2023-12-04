@@ -108,7 +108,7 @@
         <dependency>
             <groupId>com.tesults.junit5</groupId>
             <artifactId>tesults-junit5</artifactId>
-            <version>1.1.0</version>
+            <version>1.2.0</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
